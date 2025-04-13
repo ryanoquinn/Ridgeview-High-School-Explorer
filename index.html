@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ridgeview High School Class Explorer</title>
+  <style>
+    :root {
+      --blue: #00aaff;
+      --white: #ffffff;
+      --black: #1a1a1a;
+      --gray: #f2f2f2;
+      --shadow: rgba(0, 0, 0, 0.1);
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--gray);
+      color: var(--black);
+      padding-bottom: 60px; /* Ensure content doesn't hide behind fixed tip widget */
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 20px;
+      position: relative;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--blue);
+      color: var(--white);
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px var(--shadow);
+    }
+    header img {
+      height: 60px;
+    }
+    header h1 {
+      flex-grow: 1;
+      text-align: center;
+      margin: 0;
+      font-size: 24px;
+    }
+    .favorites-button {
+      background-color: var(--white);
+      color: var(--black);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px var(--shadow);
+      transition: background-color 0.2s ease;
+    }
+    .favorites-button:hover {
+      background-color: #fffbcc;
+    }
+    /* New style for the school photo to keep it appropriately sized */
+    .school-photo {
+      display: block;
+      width: 100%;
+      max-width: 800px; /* Limits the image width so it doesn't take up too much space */
+      height: auto;
+      margin: 20px auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px var(--shadow);
+    }
+    /* Tabs styling */
+    .tabs {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+      border-bottom: 2px solid #ccc;
+    }
+    .tablinks {
+      background: none;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-size: 16px;
+      outline: none;
+    }
+    .tablinks.active {
+      border-bottom: 4px solid var(--blue);
+      font-weight: bold;
+    }
+    .tabcontent {
+      margin-top: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    /* Centered text for form elements */
+    select, input[type="text"], button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-shadow: inset 0 1px 2px var(--shadow);
+      text-align: center;
+    }
+    .class-box {
+      background-color: var(--white);
+      border-radius: 8px;
+      border: 2px solid #000; /* Bold border for the entire box */
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 6px var(--shadow);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+      text-align: center;  /* Center the text inside class boxes */
+    }
+    .class-box:hover {
+      background-color: #eefaff;
+      transform: translateY(-2px);
+    }
+    .favorite-star {
+      float: right;
+      font-size: 20px;
+      color: #ccc;
+      cursor: pointer;
+    }
+    .favorite-star.favorited {
+      color: gold;
+    }
+    .class-details {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+    .panel {
+      background-color: var(--white);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 4px 10px var(--shadow);
+      text-align: center;
+    }
+    .btn {
+      background-color: var(--blue);
+      color: var(--white);
+      border: none;
+      margin: 5px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 4px var(--shadow);
+    }
+    .btn:hover {
+      background-color: #008ecc;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 14px;
+      color: #555;
+    }
+    /* Tip Widget Styles */
+    .tip-widget {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--blue);
+      color: var(--white);
+      padding: 15px;
+      text-align: center;
+      font-size: 16px;
+      box-shadow: 0 -2px 8px var(--shadow);
+    }
+    /* Center sports output text */
+    #sportsOutput {
+      text-align: center;
+    }
+    /* Favorites overlay styling (placed on top of tab content) */
+    #favoritesOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--white);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <!-- Updated image path: images folder inside docs -->
+      <img src="images/Wolfpack_Logo.jpeg" alt="Logo">
+      <h1>Ridgeview High School Class Explorer</h1>
+      <!-- The favorites button will now open the overlay regardless of the active tab -->
+      <div class="favorites-button" onclick="showFavoritesView()">Favorites <span style="color: gold;">★</span></div>
+    </header>
+  
+    <!-- Updated image path for the school photo -->
+    <img src="images/Far_Pic_of_RHS.jpg" alt="Far View of Ridgeview High School" class="school-photo">
+  
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <button class="tablinks active" onclick="openTab(event, 'classes')">Classes</button>
+      <button class="tablinks" onclick="openTab(event, 'sports')">Sports</button>
+      <button class="tablinks" onclick="openTab(event, 'guidance')">Guidance</button>
+      <button class="tablinks" onclick="openTab(event, 'other')">Other Activities</button>
+    </div>
+  
+    <!-- Tab Content Sections -->
+    <div id="classes" class="tabcontent">
+      <div id="mainView">
+        <input type="text" id="searchBox" placeholder="Search classes..." oninput="renderClasses()">
+        <select id="gradeDropdown" onchange="renderClasses()">
+          <option value="">-- Select Grade Level --</option>
+          <option value="9">9th Grade</option>
+          <option value="10">10th Grade</option>
+          <option value="11">11th Grade</option>
+          <option value="12">12th Grade</option>
+        </select>
+        <select id="subjectDropdown" onchange="renderClasses()">
+          <option value="">-- Select Subject --</option>
+        </select>
+        <div id="output"></div>
+      </div>
+    </div>
+  
+    <div id="sports" class="tabcontent hidden">
+      <div class="panel">
+        <h2>Sports Programs</h2>
+        <p>Explore our robust athletics program including football, basketball, soccer, and more!</p>
+        <!-- Sports explorer section (automatic display) -->
+        <div id="sportsMainView">
+          <select id="sportDropdown" onchange="renderSports()">
+            <option value="">-- Select Sport --</option>
+          </select>
+          <div id="sportsOutput"></div>
+        </div>
+      </div>
+    </div>
+  
+    <div id="guidance" class="tabcontent hidden">
+      <div class="panel">
+        <h2>Guidance & Counseling</h2>
+        <p>Find academic counseling, college guidance, and career planning resources here. Stop by the guidance office to see Mr. Mullins or Mr. McCowan for any assistance!</p>
+      </div>
+    </div>
+  
+    <div id="other" class="tabcontent hidden">
+      <div class="panel">
+        <h2>Other Activities</h2>
+        <p>Discover clubs, arts, music, and other extracurricular activities offered at our school. Our After the Bell Program offers many exciting activities for students!</p>
+      </div>
+    </div>
+  
+    <!-- Favorites Overlay (shared across all tabs) -->
+    <div id="favoritesOverlay" class="hidden panel">
+      <button class="btn" onclick="closeFavorites()">← Back</button>
+      <button class="btn" onclick="window.print()">🖨 Print</button>
+      <h2>Your Favorite Classes</h2>
+      <div id="favoriteList"></div>
+    </div>
+  
+    <footer>&copy; 2025 Ridgeview High School</footer>
+  </div>
+  
+  <!-- Tip Widget -->
+  <div class="tip-widget" id="tipWidget">
+    Tip of the Day: Stay organized by checking your schedule daily!
+  </div>
+  
+  <script>
+    // Global variable to store the last active tab
+    var lastActiveTab = "classes";
+    
+    // Tab switching functionality
+    function openTab(evt, tabName) {
+      lastActiveTab = tabName;
+      let tabcontents = document.getElementsByClassName("tabcontent");
+      for (let i = 0; i < tabcontents.length; i++) {
+        tabcontents[i].classList.add("hidden");
+      }
+      // Hide favorites overlay if open
+      document.getElementById("favoritesOverlay").classList.add("hidden");
+      document.getElementById(tabName).classList.remove("hidden");
+      
+      let tablinks = document.getElementsByClassName("tablinks");
+      for (let i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+      }
+      evt.currentTarget.classList.add("active");
+    }
+    
+    // ---------------------
+    // Class Explorer Code
+    // ---------------------
+    const allClasses = [
+      // English classes
+      { subject: "English", teacher: "Mr. Boyd", description: "English Grammar Essentials", room: "203", grade: 9 },
+      { subject: "English", teacher: "Mrs. Deel", description: "Creative Writing Workshop", room: "202", grade: 11 },
+      { subject: "English", teacher: "Mrs. Sykes", description: "American Literature Studies", room: "204", grade: 12 },
+      { subject: "English", teacher: "Mrs. Graham", description: "Literature & Writing", room: "201", grade: 10 },
+      // Math classes
+      { subject: "Math", teacher: "Mrs. Tiller", description: "Pre-Calculus Foundations", room: "103", grade: 11 },
+      { subject: "Math", teacher: "Mr. Dingus", description: "Computer Math", room: "104", grade: 9 },
+      { subject: "Math", teacher: "Mr. O'Quin", description: "Algebra 2", room: "102", grade: [10,11] },
+      { subject: "Math", teacher: "Mrs. Greear", description: "Algebra and Geometry", room: "101", grade: 9 },
+      // Physical Education classes
+      { subject: "Physical Education", teacher: "Mrs. Grant", description: "Sports and Fitness", room: "401", grade: 9 },
+      { subject: "Physical Education", teacher: "Mr. Mullins", description: "Team Sports and Coordination", room: "402", grade: 10 },
+      { subject: "Physical Education", teacher: "Mr. Stanley", description: "Personal Fitness & Conditioning", room: "403", grade: 11 },
+      // Robotics classes
+      { subject: "Robotics", teacher: "Mr. Tiller", description: "Introduction to Robotics", room: "102", grade: 9 },
+      { subject: "Robotics", teacher: "Mr. Tiller", description: "Intermediate Robotics", room: "102", grade: [10, 11] },
+      { subject: "Robotics", teacher: "Mrs. Tiller", description: "Advanced Robotics; prepared for FRC Competitions", room: "304", grade: 12 },
+      // Science classes
+      { subject: "Science", teacher: "Mrs. Yates", description: "Biology with Labs", room: "301", grade: 9 },
+      { subject: "Science", teacher: "Mr. Counts", description: "Biology with Labs", room: "301", grade: 10 },
+      { subject: "Science", teacher: "Mr. Compton", description: "Chemistry Concepts", room: "303", grade: [11,12] },
+      { subject: "Science", teacher: "Mr. White", description: "Environmental Science", room: "304", grade: [9,10] },
+      { subject: "Science", teacher: "Mr. Rose", description: "Intro to Geology", room: "302", grade: [9,10,11,12] },
+      // Weightlifting classes
+      { subject: "Weightlifting", teacher: "Mr. Stanley", description: "Basic Weightlifting Techniques", room: "601", grade: [9,10] },
+      { subject: "Weightlifting", teacher: "Mr. Stanley and Mr. Grant", description: "Advanced Weightlifting; typically for football players", room: "602", grade: [10,11] }
+    ];
+    
+    let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    
+    function populateSubjects() {
+      const subjects = [...new Set(allClasses.map(c => c.subject))].sort();
+      const dropdown = document.getElementById("subjectDropdown");
+      dropdown.innerHTML = '<option value="">-- Select Subject --</option>';
+      subjects.forEach(sub => {
+        const opt = document.createElement("option");
+        opt.value = sub;
+        opt.textContent = sub;
+        dropdown.appendChild(opt);
+      });
+    }
+    
+    function renderClasses() {
+      const subject = document.getElementById("subjectDropdown").value.toLowerCase();
+      const gradeStr = document.getElementById("gradeDropdown").value;
+      const search = document.getElementById("searchBox").value.toLowerCase();
+      const output = document.getElementById("output");
+      output.innerHTML = "";
+      
+      const selectedGrade = gradeStr ? Number(gradeStr) : null;
+      
+      let filtered = allClasses.filter(cls => {
+        const subjectMatch = !subject || cls.subject.toLowerCase() === subject;
+        const searchMatch = !search ||
+          cls.teacher.toLowerCase().includes(search) ||
+          cls.description.toLowerCase().includes(search);
+        
+        let gradeMatch = true;
+        if (selectedGrade !== null) {
+          if (Array.isArray(cls.grade)) {
+            gradeMatch = cls.grade.includes(selectedGrade);
+          } else {
+            gradeMatch = cls.grade === selectedGrade;
+          }
+        }
+        return subjectMatch && gradeMatch && searchMatch;
+      });
+      
+      filtered.sort((a, b) => {
+        const subjectCompare = a.subject.localeCompare(b.subject);
+        if (subjectCompare !== 0) return subjectCompare;
+        return a.teacher.localeCompare(b.teacher);
+      });
+      
+      if (!subject && !gradeStr && !search) return;
+      if (filtered.length === 0) {
+        output.innerHTML = "<p>No classes found.</p>";
+        return;
+      }
+      
+      filtered.forEach((cls) => {
+        const originalIndex = allClasses.findIndex(c =>
+          c.subject === cls.subject &&
+          c.teacher === cls.teacher &&
+          c.room === cls.room &&
+          (Array.isArray(c.grade)
+            ? JSON.stringify(c.grade) === JSON.stringify(cls.grade)
+            : c.grade === cls.grade)
+        );
+        const box = document.createElement("div");
+        box.className = "class-box";
+        box.innerHTML = `
+          <strong>${cls.subject}</strong> - ${cls.teacher}
+          <span class="favorite-star ${favorites.includes(originalIndex) ? 'favorited' : ''}" onclick="event.stopPropagation(); toggleFavorite(${originalIndex}, this)">★</span>
+          <div class="class-details" id="details-${originalIndex}">
+            <p><strong>Description:</strong> ${cls.description}</p>
+            <p><strong>Room:</strong> ${cls.room}</p>
+            <p><strong>Grade Level:</strong> ${
+              Array.isArray(cls.grade)
+                ? cls.grade.join(", ") + "th Grade"
+                : cls.grade + "th Grade"
+            }</p>
+          </div>
+        `;
+        box.onclick = () => {
+          const details = document.getElementById(`details-${originalIndex}`);
+          details.style.display = details.style.display === "block" ? "none" : "block";
+        };
+        output.appendChild(box);
+      });
+    }
+    
+    function toggleFavorite(index, icon) {
+      if (favorites.includes(index)) {
+        favorites = favorites.filter(i => i !== index);
+      } else {
+        favorites.push(index);
+      }
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+      icon.classList.toggle("favorited");
+      renderFavorites();
+    }
+    
+    function renderFavorites() {
+      const list = document.getElementById("favoriteList");
+      list.innerHTML = "";
+      if (favorites.length === 0) {
+        list.innerHTML = "<p>Your favorite classes will be added here.</p>";
+        return;
+      }
+      favorites.forEach(index => {
+        const cls = allClasses[index];
+        const div = document.createElement("div");
+        div.className = "class-box";
+        div.innerHTML = `
+          <strong>${cls.subject}</strong> - ${cls.teacher}
+          <div class="class-details" style="display: block;">
+            <p><strong>Description:</strong> ${cls.description}</p>
+            <p><strong>Room:</strong> ${cls.room}</p>
+            <p><strong>Grade Level:</strong> ${
+              Array.isArray(cls.grade)
+                ? cls.grade.join(", ") + "th Grade"
+                : cls.grade + "th Grade"
+            }</p>
+            <button class="btn" onclick="removeFavorite(${index})">Remove</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+    
+    function removeFavorite(index) {
+      favorites = favorites.filter(i => i !== index);
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+      renderFavorites();
+      renderClasses();
+    }
+    
+    // ---------------------
+    // Favorites Overlay Functions
+    // ---------------------
+    function showFavoritesView() {
+      let tabcontents = document.getElementsByClassName("tabcontent");
+      for (let i = 0; i < tabcontents.length; i++) {
+        tabcontents[i].classList.add("hidden");
+      }
+      let tablinks = document.getElementsByClassName("tablinks");
+      for (let i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+      }
+      document.getElementById("favoritesOverlay").classList.remove("hidden");
+      renderFavorites();
+    }
+    
+    function closeFavorites() {
+      document.getElementById("favoritesOverlay").classList.add("hidden");
+      let tabToShow = lastActiveTab || "classes";
+      document.getElementById(tabToShow).classList.remove("hidden");
+      let tablinks = document.getElementsByClassName("tablinks");
+      for (let i = 0; i < tablinks.length; i++) {
+        let txt = tablinks[i].textContent.trim().toLowerCase();
+        if ((tabToShow === "other" && txt.indexOf("other") !== -1) || txt === tabToShow) {
+          tablinks[i].classList.add("active");
+        } else {
+          tablinks[i].classList.remove("active");
+        }
+      }
+    }
+    
+    // ---------------------
+    // Sports Explorer Code (Automatic Display)
+    // ---------------------
+    const allSports = [
+      { sport: "Baseball", coach: "Coach Stanley", description: "Competitive baseball team participating in regional tournaments.", location: "Baseball Field" },
+      { sport: "Basketball", coach: "Coach McCowan", description: "Training in fundamentals and team play, with seasonal tournaments.", location: "Gymnasium" },
+      { sport: "Football", coach: "Coach Grant", description: "High-energy football program emphasizing teamwork and sportsmanship.", location: "Football Stadium" },
+      { sport: "Soccer", coach: "Coach Knepp", description: "Dynamic soccer teams with strategic gameplay.", location: "Soccer Field" },
+      { sport: "Softball", coach: "Coach Mullins", description: "Girls' softball focused on skill development and teamwork.", location: "Softball Field" },
+      { sport: "Tennis", coach: "Coach White", description: "Tennis program for both beginners and advanced players, focusing on technique.", location: "Tennis Courts" },
+      { sport: "Track & Field", coach: "Coach Owens", description: "Comprehensive track & field program for aspiring athletes.", location: "Track and Field Stadium" }
+    ];
+    
+    function populateSports() {
+      const sportsList = [...new Set(allSports.map(s => s.sport))].sort((a, b) => a.localeCompare(b));
+      const dropdown = document.getElementById("sportDropdown");
+      dropdown.innerHTML = '<option value="">-- Select Sport --</option>';
+      sportsList.forEach(sport => {
+        const opt = document.createElement("option");
+        opt.value = sport.toLowerCase();
+        opt.textContent = sport;
+        dropdown.appendChild(opt);
+      });
+      dropdown.value = "football";
+      renderSports();
+    }
+    
+    function renderSports() {
+      const dropdown = document.getElementById("sportDropdown");
+      const selectedSport = dropdown.value;
+      const output = document.getElementById("sportsOutput");
+      output.innerHTML = "";
+      if (!selectedSport) return;
+      const sportObj = allSports.find(s => s.sport.toLowerCase() === selectedSport);
+      if (!sportObj) {
+        output.innerHTML = "<p>No sport info available.</p>";
+        return;
+      }
+      const title = "Ridgeview High School " + sportObj.sport;
+      output.innerHTML = `
+        <h3>${title}</h3>
+        <p><strong>Description:</strong> ${sportObj.description}</p>
+        <p><strong>Location:</strong> ${sportObj.location}</p>
+      `;
+    }
+    
+    // ---------------------
+    // Tip Widget Functionality
+    // ---------------------
+    const tips = [
+      "Remember to get to class on time!",
+      "Stay organized by using a planner and by reading the morning announcements.",
+      "dcps.k12.va.us",
+      "Reach out to your teachers if you need help.",
+      "Keep your class notes up-to-date for tests!"
+    ];
+    
+    function updateTip() {
+      const tipWidget = document.getElementById("tipWidget");
+      const randomTip = tips[Math.floor(Math.random() * tips.length)];
+      tipWidget.textContent = "Tip of the Day: " + randomTip;
+    }
+    
+    setInterval(updateTip, 10000);
+    populateSubjects();
+    renderClasses();
+    populateSports();
+  </script>
+</body>
+</html>
